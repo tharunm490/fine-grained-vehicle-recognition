@@ -13,7 +13,6 @@ import {
   GitCompare,
   History,
   Layers,
-  Lock,
   ScanLine,
   Server,
   Sparkles,
@@ -173,10 +172,9 @@ export default function DashboardPage() {
         <StatCard
           icon={GitCompare}
           label="Approach lanes"
-          value="02"
-          detail="Approach 3 hybrid pipeline is locked"
+          value="03"
+          detail="Approach 3: Hybrid Feature Fusion planned"
           tone="amber"
-          badge={<Lock className="size-2.5" />}
         />
       </div>
 

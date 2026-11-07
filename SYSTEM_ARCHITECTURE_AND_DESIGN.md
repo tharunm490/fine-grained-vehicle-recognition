@@ -574,26 +574,81 @@ deleted.
 - **Operational scope:** the application is a local image analysis tool, not a
   production multi-tenant service or continuous video pipeline.
 
-## 14. Future Scope — Approach 3 (Planned, Not Implemented)
+## 14. Approach 3 — Hybrid (Architecture and Implementation Status)
 
-The following hybrid approach is a roadmap item only:
+### A. Intended architecture (feature-level fusion — not yet implemented)
+
+The intended Approach 3 is a feature-level hybrid that trains a new classifier
+over a concatenated deep + handcrafted feature vector:
 
 ```mermaid
 flowchart LR
-    I[Vehicle crop] --> D[EfficientNet or DINOv2 deep features]
+    I[Vehicle crop] --> D[DINOv2 ViT-B/14 backbone frozen]
     I --> H[HOG + LBP + HSV features]
-    D --> F[Feature concatenation]
-    H --> F
-    F --> M[Proposed MLP classifier]
-    M --> O[196-class prediction]
+    D --> E[CLS + patch-mean embedding 1536-d L2-normalised]
+    H --> S[StandardScaler 2807-d]
+    E --> F[Feature concatenation 4343-d]
+    S --> F
+    F --> P[Optional PCA]
+    P --> C[RBF SVM trained on Stanford Cars training split]
+    C --> O[196-class prediction]
 ```
 
-The motivation is to combine learned semantic and shape representations with explicit
-edge, texture, and colour signals. A future experiment could standardize the handcrafted
-vector, select a documented deep embedding layer, concatenate the vectors, train an MLP,
-and compare accuracy, calibration, latency, and ablations against the current models.
-The current application contains no hybrid fusion, ensemble weighting, retrieval index,
-or Approach 3 endpoint.
+This architecture has **not been trained or evaluated**. No hybrid checkpoint
+exists in the application.
+
+### B. Current hybrid selection
+
+The current application selects between the existing deep-learning predictions.
+No new model or checkpoint is required, and the planned feature-level fusion
+classifier has not been trained.
+
+```mermaid
+flowchart LR
+    I[Vehicle crop] --> C2[EfficientNet-B2]
+    I --> C3[DINOv2]
+    I --> C1[Classical SVM reference]
+    C2 -->|softmax confidence| S[Select highest-confidence prediction]
+    C3 -->|softmax confidence| S
+    S --> O[Selected class + source model ID]
+    C1 --> R[Classical reference only]
+```
+
+**Decision strategy: HIGHEST_CONFIDENCE_DEEP_LEARNING**
+
+| Step | Description |
+| --- | --- |
+| 1 | Run EfficientNet-B2 and DINOv2 on the vehicle crop (unmodified predictions) |
+| 2 | Compare their softmax confidences |
+| 3 | Select the prediction with the higher confidence as the hybrid result |
+| 4 | Run Classical SVM and include its prediction as a reference only |
+| 5 | Return the selected model's actual confidence and source metadata |
+
+**Important distinctions:**
+
+- The original model predictions from EfficientNet-B2, DINOv2, and Classical SVM are
+  **not modified** by the hybrid selection layer.
+- Hybrid selection is isolated in `backend/app/services/hybrid_selection_service.py`
+  and `backend/app/api/routes/hybrid.py`. Existing model checkpoints and
+  constituent predictions are not changed.
+
+**Endpoint:** `POST /api/hybrid/predict`
+
+Returns:
+- All three constituent model predictions (unmodified)
+- The selected source model ID and its actual confidence
+- A selection note explaining which model was chosen and why
+
+### C. Implementation status summary
+
+| Item | Status |
+| --- | --- |
+| Hybrid prediction selection | ✅ Implemented and active |
+| `/api/hybrid/predict` endpoint | ✅ Available |
+| Frontend hybrid result | ✅ Shown after the individual model outputs |
+| Feature-level fusion (DINOv2 + HOG/LBP/HSV → SVM) | ⏳ Not yet trained |
+| Hybrid checkpoint | ⏳ Not yet available |
+
 
 ## 15. Conclusion
 
@@ -607,9 +662,15 @@ The classical SVM provides an interpretable baseline but has poor recorded accur
 EfficientNet-B2 supplies a compact learned CNN path whose reported metrics remain
 unverified for the supplied transfer checkpoint. DINOv2 is the strongest independently
 measured path on the limited four-class local validation set, while still showing
-near-neighbour confusions and high CPU cost. The next major research direction is a
-carefully evaluated hybrid feature-fusion model, explicitly kept separate from the
-implemented system until it exists and is measured.
+near-neighbour confusions and high CPU cost.
+
+Approach 3 is currently implemented as hybrid prediction selection available at
+`POST /api/hybrid/predict`. It selects the highest-confidence prediction from
+EfficientNet-B2 and DINOv2 using their actual softmax confidences. The Classical
+SVM prediction is included as a reference. No new checkpoint is required.
+The intended feature-level fusion architecture (DINOv2 embeddings + HOG/LBP/HSV → SVM)
+is documented in section 14A as a future research direction and has not yet been trained
+or evaluated.
 
 ## 16. Source and Evidence Index
 

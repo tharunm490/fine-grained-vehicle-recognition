@@ -358,7 +358,8 @@ function IdlePanel({ models }: { models: ModelInfo[] }) {
             </h2>
             <p className="mt-2 text-xs leading-5 text-muted-foreground">
               Upload a car, motorcycle, bus or truck. The system localizes each vehicle, classifies
-              its exact model and compares the evidence across classical and deep learning models.
+              its exact model and compares the evidence across classical, deep learning and hybrid
+              models.
             </p>
             <div className="mt-5 flex flex-wrap gap-2">
               {models.map((model) => {

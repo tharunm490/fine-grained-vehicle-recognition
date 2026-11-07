@@ -11,7 +11,6 @@ import {
   FileImage,
   GitCompare,
   Layers,
-  Lock,
   ScanLine,
   Server,
   ShieldCheck,
@@ -61,9 +60,9 @@ export default function AboutPage() {
               <Code2 className="size-3 text-cyan-300/70" />
               Next.js + FastAPI
             </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/20 bg-amber-400/[0.04] px-2.5 py-1.5 text-[10px] text-amber-200/70">
-              <Lock className="size-3" />
-              Approach 3 deferred
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/20 bg-emerald-400/[0.04] px-2.5 py-1.5 text-[10px] text-emerald-200/70">
+              <Sparkles className="size-3" />
+              Approach 3: Hybrid Feature Fusion
             </span>
           </>
         }
@@ -114,7 +113,7 @@ export default function AboutPage() {
       <section>
         <SectionHeader
           title="Approach map"
-          description="Two approaches are implemented across three model checkpoints. The third remains a documented roadmap item."
+          description="Three approaches are documented: classical computer vision, deep learning, and the planned Hybrid Feature Fusion architecture."
         />
         <div className="grid gap-3 lg:grid-cols-3">
           <ApproachCard
@@ -137,13 +136,12 @@ export default function AboutPage() {
           />
           <ApproachCard
             label="Approach 3"
-            title="Hybrid ensemble · calibration · retrieval"
-            tone="neutral"
-            status="Coming later · not implemented"
-            icon={Lock}
-            body="No ensemble weighting, embedding index or retrieval layer exists in this build. Sigmoid calibration is implemented for the classical SVM only; the hybrid calibration and retrieval layer remains a roadmap item."
-            points={["No ensemble code", "No vector index", "No retrieval layer", "No hidden endpoint"]}
-            disabled
+            title="Hybrid Feature Fusion"
+            tone="emerald"
+            status="Planned · not trained"
+            icon={Sparkles}
+            body="Planned feature-level fusion: DINOv2 embeddings + HOG + LBP + HSV → feature fusion → RBF SVM classifier. The classifier has not been trained or evaluated."
+            points={["DINOv2 embeddings", "HOG + LBP + HSV", "Feature fusion", "RBF SVM classifier"]}
           />
         </div>
       </section>
@@ -320,7 +318,7 @@ npm run dev`}
             "The supplied EfficientNet-B2 file is named as a transfer checkpoint; reported fine-tuned metrics are not independently verified.",
             "DINOv2 measured 93.33% top-1 / 98.33% top-5 on 120 labelled images across four classes; checkpoint metadata reports 94.35% on an unavailable original split, so this is not a full 196-class test score.",
             "The classical SVM is weak on fine-grained classes. Its probabilities are sigmoid-calibrated but low (mean top-1 confidence 3.23%, ECE 16.77% on the 120-image validation set).",
-            "Approach 3 (ensemble weighting, advanced calibration and retrieval) is not implemented in this build.",
+            "The planned Hybrid Feature Fusion architecture combines DINOv2 embeddings with HOG, LBP and HSV features before an RBF SVM classifier. It has not been trained or evaluated.",
           ].map((item) => (
             <div
               key={item}
@@ -397,7 +395,7 @@ function ApproachCard({
   title: string;
   body: string;
   points: string[];
-  tone: "amber" | "cyan" | "neutral";
+  tone: "amber" | "cyan" | "emerald" | "neutral";
   status: string;
   icon: typeof Cpu;
   disabled?: boolean;
@@ -405,6 +403,7 @@ function ApproachCard({
   const tones = {
     amber: "border-amber-400/15 bg-amber-400/[0.035] text-amber-300",
     cyan: "border-cyan-400/15 bg-cyan-400/[0.035] text-cyan-300",
+    emerald: "border-emerald-400/15 bg-emerald-400/[0.035] text-emerald-300",
     neutral: "border-border/70 bg-white/[0.012] text-muted-foreground/55",
   };
 

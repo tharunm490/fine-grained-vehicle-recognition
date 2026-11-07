@@ -101,7 +101,7 @@ export default function ComparisonPage() {
             One image. <span className="text-gradient">Three independent verdicts.</span>
           </>
         }
-        description="Run the classical SVM, EfficientNet-B2 and DINOv2 on the same vehicle crop, then inspect agreement, score types and top-5 alternatives side by side."
+        description="Run Classical SVM, EfficientNet-B2 and DINOv2 on the same vehicle crop, then inspect agreement, score types and top-5 alternatives side by side."
         actions={
           <span className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-white/[0.02] px-2.5 py-1.5 text-[10px] text-muted-foreground">
             <GitCompare className="size-3 text-cyan-300/70" />
@@ -218,8 +218,9 @@ export default function ComparisonPage() {
                     Three approaches to the same fine-grained problem.
                   </h2>
                   <p className="mt-2 text-xs leading-5 text-muted-foreground">
-                    The comparison deliberately mixes a handcrafted-feature SVM with two learned
-                    vision models. Their failure modes differ, which makes disagreement informative.
+                    The comparison mixes a handcrafted-feature SVM and two learned vision models.
+                    Their failure modes differ, which makes disagreement informative. Hybrid
+                    Feature Fusion remains a planned architecture and has no evaluation metrics.
                   </p>
                 </div>
                 <div className="flex shrink-0 items-center gap-2 rounded-xl border border-border/60 bg-black/20 px-3 py-2.5">
@@ -242,11 +243,15 @@ export default function ComparisonPage() {
                     <ModelMark modelId={model.id} className="size-9" />
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <p className="text-xs font-medium text-foreground/90">{model.name}</p>
+                        <p className="text-xs font-medium text-foreground/90">
+                          {model.id === "hybrid" ? "Hybrid Feature Fusion" : model.name}
+                        </p>
                         <ApproachBadge approachKey={model.approach_key} />
                       </div>
                       <p className="mt-1 text-[10px] leading-4 text-muted-foreground/55">
-                        {model.description}
+                        {model.id === "hybrid"
+                          ? "DINOv2 embeddings + HOG + LBP + HSV → feature fusion → RBF SVM classifier (planned architecture; not trained)."
+                          : model.description}
                       </p>
                     </div>
                     <div className="shrink-0 text-right">
@@ -254,7 +259,13 @@ export default function ComparisonPage() {
                         {model.input_size} · {model.num_classes} classes
                       </p>
                       <p className="mt-0.5 font-mono text-[9px] text-cyan-200/55">
-                        {model.approach_key === "classical" ? "score-based" : "softmax"}
+                        {model.id === "hybrid"
+                          ? "planned"
+                          : model.approach_key === "classical"
+                          ? "score-based"
+                          : model.approach_key === "hybrid"
+                          ? "fused"
+                          : "softmax"}
                       </p>
                     </div>
                   </div>

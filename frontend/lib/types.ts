@@ -18,7 +18,7 @@ export interface ModelInfo {
   name: string;
   short_name: string;
   approach: string;
-  approach_key: "classical" | "deep_learning";
+  approach_key: "classical" | "deep_learning" | "hybrid";
   architecture: string;
   description: string;
   training_approach: string;
@@ -66,6 +66,16 @@ export interface ModelPrediction {
   note: string | null;
 }
 
+export interface HybridResult {
+  predicted_class: string;
+  predicted_class_id: number;
+  source_model_id: string;
+  source_model_name: string;
+  source_confidence: number | null;
+  model_agreement: "agree" | "disagree" | "unavailable";
+  selection_explanation: string;
+}
+
 export interface BoundingBox {
   x1: number;
   y1: number;
@@ -102,6 +112,7 @@ export interface VehicleResult {
   crop_image: string | null;
   predictions: ModelPrediction[];
   comparison: ComparisonSummary | null;
+  hybrid: HybridResult | null;
 }
 
 export interface AnalysisImage {

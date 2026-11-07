@@ -5,6 +5,7 @@ import {
   Info,
   LayoutDashboard,
   ScanLine,
+  GitMerge,
   type LucideIcon,
 } from "lucide-react";
 
@@ -37,6 +38,13 @@ export const NAV_ITEMS = [
     shortLabel: "Comparison",
     description: "Compare three classifiers",
     icon: GitCompare,
+  },
+  {
+    href: "/hybrid",
+    label: "Hybrid Feature Fusion",
+    shortLabel: "Hybrid",
+    description: "Planned fused feature architecture",
+    icon: GitMerge,
   },
   {
     href: "/performance",

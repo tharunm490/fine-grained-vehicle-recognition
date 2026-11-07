@@ -79,4 +79,11 @@ async def recognize_compare(
     registry: ModelRegistry = Depends(get_registry),
     repository: SqliteHistoryRepository = Depends(get_repository),
 ) -> AnalyzeResponse:
-    return await _run(file, "all", use_detection, detection_confidence, registry, repository)
+    return await _run(
+        file,
+        "all,hybrid",
+        use_detection,
+        detection_confidence,
+        registry,
+        repository,
+    )

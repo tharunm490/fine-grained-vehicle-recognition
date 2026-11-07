@@ -9,6 +9,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 
 from app.api.routes import comparison, detection, evaluation, health, history, models, recognition
+from app.api.routes import hybrid as hybrid_routes
 from app.config import settings
 from app.database import initialize_database
 from app.database.repository import SqliteHistoryRepository
@@ -30,7 +31,7 @@ async def lifespan(app: FastAPI):
     app.state.registry = registry
     app.state.repository = SqliteHistoryRepository()
     logger.info(
-        "Startup complete — %d/%d classifiers available, detector=%s, device=%s",
+        "Startup complete — %d/%d original classifiers available, detector=%s, device=%s",
         len(registry.available_model_ids),
         3,
         registry.detector.available,
@@ -119,6 +120,7 @@ for router in (
     comparison.router,
     history.router,
     evaluation.router,
+    hybrid_routes.router,
 ):
     app.include_router(router, prefix=settings.api_prefix)
 

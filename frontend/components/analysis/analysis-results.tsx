@@ -11,6 +11,7 @@ import {
   ImageIcon,
   Info,
   Layers,
+  GitMerge,
   RotateCcw,
   ScanLine,
   TriangleAlert,
@@ -221,6 +222,7 @@ export function AnalysisResults({ result, onReset, resetLabel = "New analysis" }
                     {index === activeVehicle ? (
                       <CheckCircle2 className="size-3.5 shrink-0 text-cyan-300" />
                     ) : null}
+
                   </button>
                 ))}
               </div>
@@ -293,7 +295,7 @@ export function AnalysisResults({ result, onReset, resetLabel = "New analysis" }
           </div>
 
           {vehicle.predictions.length ? (
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-3">
               {vehicle.predictions.map((prediction) => (
                 <PredictionCard key={prediction.model_id} prediction={prediction} />
               ))}
@@ -303,6 +305,8 @@ export function AnalysisResults({ result, onReset, resetLabel = "New analysis" }
               No classifier predictions were returned for this vehicle.
             </div>
           )}
+
+          {vehicle.hybrid ? <HybridResult hybrid={vehicle.hybrid} /> : null}
 
           {vehicle.comparison ? (
             <div className="mt-5">
@@ -327,6 +331,59 @@ export function AnalysisResults({ result, onReset, resetLabel = "New analysis" }
         </div>
       ) : null}
     </div>
+  );
+}
+
+function HybridResult({
+  hybrid,
+}: {
+  hybrid: NonNullable<AnalyzeResponse["vehicles"][number]["hybrid"]>;
+}) {
+  const confidence = hybrid.source_confidence;
+  return (
+    <section className="mt-5 rounded-2xl border border-emerald-400/25 bg-emerald-400/[0.045] p-4 panel-glow">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2">
+            <GitMerge className="size-4 text-emerald-300" />
+            <p className="text-sm font-medium text-emerald-100">Hybrid Feature Fusion</p>
+          </div>
+          <p className="mt-1 text-[10px] text-muted-foreground/70">
+            Selected from the highest valid deep-learning confidence.
+          </p>
+        </div>
+        <span className="rounded-full border border-border/60 bg-black/15 px-2 py-1 text-[9px] text-muted-foreground/70">
+          Source: {hybrid.source_model_name}
+        </span>
+      </div>
+      <div className="mt-4 grid gap-4 md:grid-cols-[minmax(0,1fr)_220px] md:items-end">
+        <div>
+          <p className="font-mono text-[9px] tracking-[0.14em] text-muted-foreground/55 uppercase">
+            Selected vehicle
+          </p>
+          <h3 className="mt-1 text-xl font-semibold tracking-tight text-foreground">
+            {hybrid.predicted_class}
+          </h3>
+          <p className="mt-2 text-[10px] leading-4 text-muted-foreground/70">
+            {hybrid.selection_explanation}
+          </p>
+        </div>
+        <div>
+          <div className="flex items-baseline justify-between gap-2">
+            <span className="text-[10px] text-muted-foreground/70">Source confidence</span>
+            <span className="font-mono text-lg font-semibold text-emerald-200 tabular-nums">
+              {confidence === null ? "—" : formatProbability(confidence)}
+            </span>
+          </div>
+          <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/[0.08]">
+            <div
+              className="h-full rounded-full bg-emerald-400"
+              style={{ width: `${Math.max((confidence ?? 0) * 100, confidence === null ? 0 : 1)}%` }}
+            />
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
 

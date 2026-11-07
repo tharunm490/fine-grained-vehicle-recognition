@@ -1,18 +1,12 @@
 "use client";
 
-import { ThemeProvider } from "next-themes";
+import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <ThemeProvider
-      attribute="class"
-      defaultTheme="dark"
-      themes={["dark", "light"]}
-      enableSystem={false}
-      storageKey="autolens-theme"
-    >
+    <ThemeProvider>
       <TooltipProvider delay={250}>
         {children}
         <Toaster position="bottom-right" richColors closeButton />

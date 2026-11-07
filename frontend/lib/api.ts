@@ -160,6 +160,18 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     }),
+
+  hybridPredict: (file: File, options: Omit<RecognitionOptions, "models"> = {}) => {
+    const form = new FormData();
+    form.append("file", file);
+    form.append("use_detection", String(options.useDetection ?? true));
+    form.append("detection_confidence", String(options.detectionConfidence ?? 0.35));
+    return request<AnalyzeResponse>("/api/hybrid/predict", {
+      method: "POST",
+      body: form,
+      signal: options.signal,
+    });
+  },
 };
 
 export function getErrorMessage(error: unknown): string {

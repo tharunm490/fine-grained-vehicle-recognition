@@ -38,6 +38,15 @@ export const MODEL_ACCENTS: Record<string, ModelAccent> = {
     chart: "var(--chart-dinov2)",
     gradient: "from-violet-400/20 via-violet-400/5 to-transparent",
   },
+  hybrid: {
+    text: "text-emerald-300",
+    softText: "text-emerald-200/80",
+    surface: "bg-emerald-400/10",
+    border: "border-emerald-400/25",
+    dot: "bg-emerald-400",
+    chart: "var(--chart-hybrid, #34d399)",
+    gradient: "from-emerald-400/20 via-emerald-400/5 to-transparent",
+  },
 };
 
 const FALLBACK_ACCENT: ModelAccent = {
@@ -58,6 +67,7 @@ export const MODEL_SHORT_NAMES: Record<string, string> = {
   classical_svm: "Classical SVM",
   efficientnet_b2: "EfficientNet-B2",
   dinov2: "DINOv2 ViT-B/14",
+  hybrid: "Hybrid Feature Fusion",
 };
 
 export function shortModelName(modelId: string, fallback?: string | null): string {
@@ -67,6 +77,7 @@ export function shortModelName(modelId: string, fallback?: string | null): strin
 export const APPROACH_LABELS: Record<string, string> = {
   classical: "Classical CV",
   deep_learning: "Deep Learning",
+  hybrid: "Hybrid Feature Fusion",
 };
 
 export interface ProvenanceMeta {

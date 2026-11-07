@@ -13,11 +13,13 @@ from app.schemas.response import (
     AnalysisImage,
     AnalyzeResponse,
     Detection,
+    HybridResult,
     ModelPrediction,
     VehicleResult,
 )
 from app.services.comparison_service import build_comparison
 from app.services.detection_service import run_detection
+from app.services.hybrid_selection_service import build_hybrid_prediction
 from app.utils.errors import AppError
 from app.utils.image_utils import (
     DecodedImage,
@@ -42,6 +44,8 @@ MODEL_ALIASES = {
     "efficientnet-b2": ["efficientnet_b2"],
     "dinov2": ["dinov2"],
     "dino": ["dinov2"],
+    # Approach 3 aliases — hybrid is NOT included in "all" to preserve existing behaviour
+    "hybrid": ["hybrid"],
 }
 
 
@@ -68,12 +72,16 @@ def parse_model_selection(selection: str | list[str] | None) -> list[str]:
             raise AppError(
                 422,
                 "invalid_model_selection",
-                f"Unknown model '{token}'. Choose from: classical_svm, efficientnet_b2, dinov2, all.",
+                f"Unknown model '{token}'. Choose from: classical_svm, efficientnet_b2, dinov2, hybrid, all.",
             )
         for model_id in mapped:
             if model_id not in resolved:
                 resolved.append(model_id)
-    return [model_id for model_id in MODEL_ORDER if model_id in resolved]
+    # Preserve MODEL_ORDER for the three core models; append hybrid at the end if requested
+    ordered = [model_id for model_id in MODEL_ORDER if model_id in resolved]
+    if "hybrid" in resolved:
+        ordered.append("hybrid")
+    return ordered
 
 
 def _now_iso() -> str:
@@ -151,6 +159,16 @@ def _persist_analysis(
         )
 
     primary = _best_prediction(vehicles)
+    if vehicles and vehicles[0].hybrid is not None:
+        source_id = vehicles[0].hybrid.source_model_id
+        primary = next(
+            (
+                prediction
+                for prediction in vehicles[0].predictions
+                if prediction.model_id == source_id
+            ),
+            primary,
+        )
     record = {
         "id": analysis_id,
         "created_at": created_at,
@@ -194,8 +212,13 @@ def analyze_image(
 ) -> AnalyzeResponse:
     started = time.perf_counter()
     warnings: list[str] = []
+    hybrid_requested = "hybrid" in model_ids or set(MODEL_ORDER).issubset(model_ids)
+    requested_core_ids = [model_id for model_id in model_ids if model_id != "hybrid"]
+    if hybrid_requested:
+        requested_core_ids = list(dict.fromkeys([*requested_core_ids, *MODEL_ORDER]))
+
     available_ids = []
-    for model_id in model_ids:
+    for model_id in requested_core_ids:
         model = registry.get(model_id)
         if model is None:
             continue
@@ -203,6 +226,14 @@ def analyze_image(
             available_ids.append(model_id)
         else:
             warnings.append(f"{model.short_name} is unavailable and was skipped: {model.error}")
+    if hybrid_requested and not any(
+        model_id in available_ids for model_id in ("efficientnet_b2", "dinov2")
+    ):
+        raise AppError(
+            503,
+            "hybrid_unavailable",
+            "Hybrid selection requires at least one of EfficientNet-B2 or DINOv2 to be available.",
+        )
     if not available_ids:
         raise AppError(503, "no_models_available", "None of the selected classification models are available.")
 
@@ -270,6 +301,15 @@ def analyze_image(
             except Exception as exc:
                 logger.exception("Inference failed for model %s", model_id)
                 warnings.append(f"{model.short_name} failed on vehicle {vehicle.vehicle_id}: {exc}")
+        hybrid = None
+        if hybrid_requested:
+            selected = build_hybrid_prediction(predictions)
+            if selected is not None:
+                hybrid = HybridResult(**selected)
+            else:
+                warnings.append(
+                    f"Hybrid selection could not select a prediction for vehicle {vehicle.vehicle_id}."
+                )
         comparison = build_comparison(predictions)
         vehicles.append(
             VehicleResult(
@@ -283,6 +323,7 @@ def analyze_image(
                 ),
                 predictions=predictions,
                 comparison=comparison,
+                hybrid=hybrid,
             )
         )
 
@@ -300,7 +341,7 @@ def analyze_image(
                 vehicle_inputs=vehicles_input,
                 detections=detections,
                 warnings=warnings,
-                model_ids=available_ids,
+                model_ids=[*available_ids, *([] if not hybrid_requested else ["hybrid"])],
                 use_detection=bool(detections),
                 detection_time_ms=detection_time_ms,
                 total_time_ms=total_time_ms,

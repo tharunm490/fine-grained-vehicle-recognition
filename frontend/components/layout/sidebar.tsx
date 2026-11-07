@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Lock, PanelLeftClose, PanelLeftOpen, Sparkles } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen, Sparkles } from "lucide-react";
 import { Brand } from "@/components/brand";
 import { NAV_ITEMS } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
@@ -85,28 +85,6 @@ export function SidebarContent({
       </nav>
 
       <div className={cn("shrink-0 border-t border-sidebar-border/80", collapsed ? "p-2" : "p-3")}>
-        {!collapsed ? (
-          <div className="mb-3 rounded-xl border border-dashed border-border/80 bg-white/[0.018] p-3">
-            <div className="flex items-center gap-2">
-              <Lock className="size-3.5 text-muted-foreground/70" />
-              <p className="text-[11px] font-medium text-sidebar-foreground/80">Hybrid ensemble</p>
-              <span className="ml-auto rounded-full bg-white/[0.05] px-1.5 py-0.5 font-mono text-[8px] tracking-[0.1em] text-muted-foreground uppercase">
-                Later
-              </span>
-            </div>
-            <p className="mt-1.5 text-[10px] leading-4 text-muted-foreground/60">
-              Approach 3 is not implemented. Classical and deep learning only.
-            </p>
-          </div>
-        ) : (
-          <div
-            className="mb-2 flex h-8 items-center justify-center rounded-lg text-muted-foreground/50"
-            title="Approach 3 — coming later"
-          >
-            <Lock className="size-3.5" />
-          </div>
-        )}
-
         {mobile ? (
           <div className="flex items-center gap-2 px-2 pt-2 pb-1 text-[10px] text-muted-foreground/60">
             <Sparkles className="size-3 text-cyan-300/60" />

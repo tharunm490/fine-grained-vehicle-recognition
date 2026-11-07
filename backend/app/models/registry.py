@@ -18,6 +18,7 @@ from app.utils.checkpoint_utils import file_size, load_class_names
 logger = logging.getLogger(__name__)
 
 MODEL_ORDER = ("classical_svm", "efficientnet_b2", "dinov2")
+HYBRID_MODEL_ID = "hybrid"
 
 
 def resolve_device(requested: str) -> torch.device:
@@ -131,7 +132,6 @@ class ModelRegistry:
         return {}
 
     def model_info(self, model_id: str) -> ModelInfo:
-        model = self.models[model_id]
         notes: list[str] = []
         if model_id == "classical_svm":
             notes = [
@@ -155,6 +155,48 @@ class ModelRegistry:
                 "Checkpoint metadata reports 94.35% top-1 on its original validation split; that split was not supplied.",
                 "Architecture reconstructed from checkpoint keys: ViT-B/14, 12 blocks, 768 embedding width, 518×518 input.",
             ]
+        elif model_id == "hybrid":
+            notes = [
+                "Planned Hybrid Feature Fusion combines DINOv2, HOG, LBP and HSV features before an RBF SVM classifier.",
+                "The planned feature-fusion classifier has not been trained or evaluated.",
+            ]
+        if model_id == "hybrid":
+            hybrid_available = (
+                self.efficientnet.available or self.dinov2.available
+            )
+            return ModelInfo(
+                id="hybrid",
+                name="Hybrid Feature Fusion",
+                short_name="Hybrid Feature Fusion",
+                approach="Approach 3 — Hybrid Feature Fusion",
+                approach_key="hybrid",
+                architecture=(
+                    "DINOv2 embeddings + HOG + LBP + HSV → feature fusion → RBF SVM classifier "
+                    "(planned architecture; not trained)."
+                ),
+                description=(
+                    "Planned feature-level fusion architecture; no trained checkpoint is available."
+                ),
+                training_approach=(
+                    "Not trained or evaluated in the current application."
+                ),
+                feature_extraction=(
+                    "DINOv2 embeddings, HOG, LBP and HSV features followed by normalization and fusion."
+                ),
+                input_size="Inherits from EfficientNet-B2 (260×260) and DINOv2 (518×518)",
+                num_classes=196,
+                framework="Planned architecture — no checkpoint",
+                parameters=None,
+                available=hybrid_available,
+                error=None if hybrid_available else "Neither EfficientNet-B2 nor DINOv2 is available",
+                device=str(self.device),
+                checkpoint_filename="None — planned",
+                checkpoint_size_bytes=0,
+                load_time_ms=None,
+                metrics=self._metrics("hybrid"),
+                notes=notes,
+            )
+        model = self.models[model_id]
         return ModelInfo(
             id=model.id,
             name=model.name,
@@ -180,14 +222,24 @@ class ModelRegistry:
         )
 
     def models_info(self) -> list[ModelInfo]:
-        return [self.model_info(model_id) for model_id in MODEL_ORDER]
+        infos = [self.model_info(model_id) for model_id in MODEL_ORDER]
+        infos.append(self.model_info("hybrid"))
+        return infos
 
     def health(self) -> dict:
+        models_health = [
+            {"id": model_id, "available": self.models[model_id].available, "error": self.models[model_id].error}
+            for model_id in MODEL_ORDER
+        ]
+        models_health.append(
+            {
+                "id": "hybrid",
+                "available": self.efficientnet.available or self.dinov2.available,
+                "error": None if (self.efficientnet.available or self.dinov2.available) else "Neither EfficientNet-B2 nor DINOv2 is available",
+            }
+        )
         return {
-            "models": [
-                {"id": model_id, "available": self.models[model_id].available, "error": self.models[model_id].error}
-                for model_id in MODEL_ORDER
-            ],
+            "models": models_health,
             "device": str(self.device),
             "detector": {
                 "available": self.detector.available,

@@ -20,7 +20,7 @@ class ModelInfo(ApiModel):
     name: str
     short_name: str
     approach: str
-    approach_key: Literal["classical", "deep_learning"]
+    approach_key: Literal["classical", "deep_learning", "hybrid"]
     architecture: str
     description: str
     training_approach: str
@@ -68,6 +68,16 @@ class ModelPrediction(ApiModel):
     note: str | None = None
 
 
+class HybridResult(ApiModel):
+    predicted_class: str
+    predicted_class_id: int
+    source_model_id: str
+    source_model_name: str
+    source_confidence: float | None = None
+    model_agreement: Literal["agree", "disagree", "unavailable"] = "unavailable"
+    selection_explanation: str
+
+
 class BoundingBox(ApiModel):
     x1: float
     y1: float
@@ -104,6 +114,7 @@ class VehicleResult(ApiModel):
     crop_image: str | None = None
     predictions: list[ModelPrediction] = Field(default_factory=list)
     comparison: ComparisonSummary | None = None
+    hybrid: HybridResult | None = None
 
 
 class AnalysisImage(ApiModel):

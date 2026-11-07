@@ -125,7 +125,7 @@ export default function PerformancePage() {
     }
   };
 
-  const models = modelsData?.models ?? [];
+  const models = modelsData?.models.filter((model) => model.id !== "hybrid") ?? [];
   const accuracyData: AccuracyDatum[] = models.map((model) => ({
     name: shortModelName(model.id),
     top1: model.metrics.top1_accuracy?.value ?? null,
@@ -424,9 +424,14 @@ export default function PerformancePage() {
                 separately reports 94.35% on its original split.
               </li>
               <li className="flex gap-2">
-                <span className="mt-1.5 size-1 shrink-0 rounded-full bg-amber-300/60" />
+                <span className="mt-1.5 size-1 shrink-0 rounded-full bg-emerald-300/60" />
                 EfficientNet-B2&apos;s reported figures refer to a fine-tuned run; checkpoint
                 equivalence is not independently established.
+              </li>
+              <li className="flex gap-2">
+                <span className="mt-1.5 size-1 shrink-0 rounded-full bg-emerald-400/60" />
+                Hybrid Feature Fusion is a planned architecture: DINOv2 embeddings + HOG + LBP
+                + HSV → feature fusion → RBF SVM classifier. It has not been trained or evaluated.
               </li>
               <li className="flex gap-2">
                 <span className="mt-1.5 size-1 shrink-0 rounded-full bg-emerald-300/60" />
@@ -448,7 +453,6 @@ function ModelMetricCard({ model }: { model: ModelInfo }) {
   const extraMetrics = Object.entries(model.metrics).filter(
     ([key]) => !["top1_accuracy", "top5_accuracy"].includes(key),
   );
-
   return (
     <article className="relative overflow-hidden rounded-2xl border border-border/70 bg-card/55 p-4 panel-glow">
       <div
@@ -470,8 +474,16 @@ function ModelMetricCard({ model }: { model: ModelInfo }) {
         </div>
 
         <div className="mt-5 grid grid-cols-2 gap-3">
-          <MetricBlock label="Top-1 accuracy" metric={top1} accentClass={accent.text} />
-          <MetricBlock label="Top-5 accuracy" metric={top5} accentClass={accent.text} />
+          <MetricBlock
+            label="Top-1 accuracy"
+            metric={top1}
+            accentClass={accent.text}
+          />
+          <MetricBlock
+            label="Top-5 accuracy"
+            metric={top5}
+            accentClass={accent.text}
+          />
         </div>
 
         {extraMetrics.length ? (
